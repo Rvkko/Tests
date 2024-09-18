@@ -2,6 +2,6 @@
 - 👀 I’m interested in Manual/Automation QA
 - 🌱 I’m currently learning Manual/Automation QA
 - 💞️ I’m looking to collaborate on Big named websites with heavy user interaction
-- 📫 How to reach me Email: derrikoherronjr91@gmail.com
+- 📫 How to reach me Email: herrondjr@gmail.com
 - 😄 Pronouns: He/Him
 - ⚡ Fun fact: I Love coding.
