@@ -1,0 +1,18 @@
+{
+    "location":"Coral Springs, Florida 33065",
+    "location_weather":"Coral Springs, Florida 33065 Weather in the next hour",
+    "address":"10692 W Sample Rd, Coral Springs FL 33065-7418",
+    "cardinfo":"4012888888881881",
+    "cvv":"357",
+    "firstname":"Test",
+    "lastname":"Account",
+    "password":"Admin123!",
+    "confirmpassword": "Admin123!",
+    "strongerpassword":"Adminn123!e45",
+    "shorts-title":"Cool Awesome Shorts",
+    "shirts-title":"Cool Awesome Short Sleeve Shirt",
+    "men-pants-title":"Cool Awesome Pants (Men)",
+    "woman-pants-title":"Cool Awesome pants (Woman)",
+    "description": "This test suite automates the login and product addition process on the Shopify platform for the product 'Cool Awesome Short Sleeve Shirt'. It verifies that a user can log in using valid credentials and successfully add this product to the store.",
+    "email":"testacctmanager24@gmail.com"
+}
