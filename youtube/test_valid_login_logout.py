@@ -34,7 +34,7 @@ def test_login_logout(driver, test_data):
     sign_in.click()
 
     email = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='email']")))
-    email.send_keys(['testacctmanager24@gmail.com'])
+    email.send_keys(test_data['email'])
 
     next_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'VfPpkd-LgbsSe') and .//span[text()='Next']]")))
     next_button.click()

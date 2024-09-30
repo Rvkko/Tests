@@ -36,7 +36,7 @@ def test_login_logout(driver, test_data):
     driver.save_screenshot("Signin_Page.png")
 
     email = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='email']")))
-    email.send_keys('testacctmanager24@gmail.com')
+    email.send_keys(test_data['email'])
 
     time.sleep(2)
     driver.save_screenshot("Email_Cred.png")
@@ -45,7 +45,7 @@ def test_login_logout(driver, test_data):
     next_button.click()
 
     password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password']")))
-    password.send_keys('Admin123!')
+    password.send_keys(test_data['password'])
 
     driver.save_screenshot("Password_Cred.png")
 
