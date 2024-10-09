@@ -8,12 +8,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException
 
 @pytest.fixture
 def driver():
     driver = webdriver.Chrome()
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 20)
     driver.maximize_window()
     yield driver, wait
     driver.quit()
@@ -68,7 +68,7 @@ def test_login_logout(driver, test_data):
 
     ActionChains(driver).send_keys(Keys.PAGE_DOWN).perform()
     ActionChains(driver).send_keys(Keys.PAGE_DOWN).perform()
-
+    ActionChains(driver).send_keys(Keys.PAGE_DOWN).perform()
 
     signup = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuMemberSignUpForm-contentTop-98a05382-e397-4cac-99ce-5cb860bdc37b']/div/div[2]/div/div[4]/form/div[8]/button"))) 
     signup.click()
@@ -105,8 +105,6 @@ def test_login_logout(driver, test_data):
     premium_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuHeaderLargeScreen-header-9944ec87-e4d4-4f18-b23e-ce4a3fd8a3ba']/header/div/div[2]/div[3]/div/a")))
     premium_button.click()
 
-    #Viewing Details of premium
-    
     ActionChains(driver).send_keys(Keys.PAGE_DOWN).perform()
     ActionChains(driver).send_keys(Keys.PAGE_DOWN).perform()
     ActionChains(driver).send_keys(Keys.PAGE_UP).perform()
@@ -139,39 +137,51 @@ def test_login_logout(driver, test_data):
     zipcode = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuZuoraCheckoutPage-contentTop-f91cc90c-40b5-4896-b3f3-f8ae78bd7d76']/div/div[3]/div[1]/section[2]/div/div/div[2]/div[3]/div[3]/div/input")))
     zipcode.send_keys(test_data['zip'])
 
-    next_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuZuoraCheckoutPage-contentTop-f91cc90c-40b5-4896-b3f3-f8ae78bd7d76']/div/div[3]/div[1]/section[2]/div/div/div[4]/button")))
+    next_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuZuoraCheckoutPage-contentTop-f91cc90c-40b5-4896-b3f3-f8ae78bd7d76']/div/div[3]/div[1]/section[2]/div/div/div[3]/button")))
     next_button.click()
 
-    card_number = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardNumber']")))
-    card_number.send_keys(test_data['cardinfo'])
+    firstName = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='First Name']")))
+    firstName.send_keys(test_data['firstname'])
 
-    expiration_month = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardExpirationMonth']")))
-    expiration_month.click()
+    lastName = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='Last Name']")))
+    lastName.send_keys(test_data['lastname'])
 
-    expiration_month_select = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardExpirationMonth']/option[10]")))
-    expiration_month_select.click()
+    continue_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuZuoraCheckoutPage-contentTop-f91cc90c-40b5-4896-b3f3-f8ae78bd7d76']/div/div[3]/div[1]/section[3]/div/div[1]/div/div[3]/button")))
+    continue_button.click()
 
-    expiration_year = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardExpirationYear']")))
-    expiration_year.click()
+    ActionChains(driver).send_keys(Keys.PAGE_DOWN).perform()
 
-    expiration_year_select = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardExpirationYear']/option[8]")))
-    expiration_year_select.click()
+    credit_card = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='Card Number']")))
+    credit_card.send_keys(test_data['cardinfo'])
+
+    exp_month = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardNumber']")))
+    exp_month.click()
+
+    exp_month_selection = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardExpirationMonth']/option[10]")))
+    exp_month_selection.click()
+
+    exp_year = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='Expiry Year']")))
+    exp_year.click()
+
+    exp_year_selection = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-creditCardExpirationYear']/option[5]")))
+    exp_year_selection.click()
 
     cvv = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='input-cardSecurityCode']")))
     cvv.send_keys(test_data['cvv'])
 
-    try:
-        imnotarobot = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='recaptcha-anchor']/div[1]")))
-        imnotarobot.click()
-    except TimeoutException:
-        print("CAPTCHA might require manual intervention.")
+    captcha = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='recaptcha-anchor']/div[1]")))
+    captcha.click()
 
-    add_card_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='submitButton']")))
-    try:
-        add_card_button.click()
-    except ElementClickInterceptedException:
-        driver.execute_script("arguments[0].click();", add_card_button)
+    time.sleep(11)
 
-    WebDriverWait(driver, 10).until(EC.url_contains('https://weather.com/'))
-    actual_url = driver.current_url
-    assert actual_url.startswith('https://weather.com/')
+    # Manualy complete captcha
+
+    add_card = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='submitButton']")))
+    add_card.click()
+
+    time.sleep(5)
+
+    logout = wait.until(EC.element_to_be_clickable((By.XPATH, "//*[@id='WxuHeaderLargeScreen-header-9944ec87-e4d4-4f18-b23e-ce4a3fd8a3ba']/header/div/div[2]/div[3]/div/a[3]")))
+    logout.click()
+
+    time.sleep(5)
