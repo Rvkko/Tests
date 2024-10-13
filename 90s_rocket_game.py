@@ -18,7 +18,6 @@ WHITE = (255, 255, 255)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shooting Game !!!")
 
-# images and sounds
 def load_image(path, size=None):
     image = pygame.image.load(path)
     if size:
@@ -34,7 +33,6 @@ player_image = load_image(r"c:/Users/Rvkko's computer/Pictures/BAOyZX.png", (PLA
 enemy_image = load_image(r"c:/Users/Rvkko's computer/Pictures/mini1.png", (PLAYER_SIZE, PLAYER_SIZE))
 bullet_image = load_image(r"c:/Users/Rvkko's computer/Pictures/66cb7c87c36bc8152d8f80b5.png", (20, 20))
 
-# background music
 pygame.mixer.music.load(r"c:/Users/Rvkko's computer/Downloads/Megaman 3 Theme.mp3")
 pygame.mixer.music.set_volume(0.4)
 pygame.mixer.music.play(-1)
@@ -61,7 +59,6 @@ class Player:
 
 current_player = None
 
-# display scores
 def display_scores(current_score, high_score):
     current_score_text = font.render(f"Current Score: {current_score}", True, (255, 255, 255))
     high_score_text = font.render(f"High Score: {high_score}", True, (255, 255, 255))
@@ -70,24 +67,20 @@ def display_scores(current_score, high_score):
     screen.blit(high_score_text, (50, 100))
     pygame.display.flip()
 
-# enemy drop
 def drop_enemies(enemy_list):
     if len(enemy_list) < 10:
         enemy_x_pos = random.randint(0, WIDTH - ENEMY_SIZE)
         enemy_list.append([enemy_x_pos, 0])
 
-# player death
 def player_death():
     global score, current_player
     current_player.update_high_score(score)
     pygame.mixer.music.stop()
 
-# Draw entities
 def draw_entities(image, positions):
     for pos in positions:
         screen.blit(image, (pos[0], pos[1]))
 
-# Update positions
 def update_positions(positions, speed, is_bullet=False):
     for idx, pos in enumerate(positions):
         if is_bullet:
@@ -101,7 +94,6 @@ def update_positions(positions, speed, is_bullet=False):
             else:
                 positions.pop(idx)
 
-# Function to check collision
 def check_collision(list1, list2, size1, size2):
     for item1 in list1:
         for item2 in list2:
@@ -113,20 +105,17 @@ def check_collision(list1, list2, size1, size2):
                 return list1.index(item1), list2.index(item2)
     return None
 
-# Ensure all buttons in the code use the updated create_button function
 def login_screen():
     global current_player, score
-    # Define retro colors for text and input box
     color_inactive = pygame.Color('lightskyblue3')
     color_active = pygame.Color('cyan')
-    background_color = (20, 20, 30)  # Dark background
+    background_color = (20, 20, 30)
     neon_purple = pygame.Color('purple')
     
-    # Use default font for title text
     title_font = pygame.font.SysFont("monospace", 50)
     input_font = pygame.font.Font(r"c:\\Users\\Rvkko's computer\\Downloads\\CsDegitaRegularDemo-lxVGe.otf", 35)
     
-    input_box = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2, 300, 60)  # Wider text box for retro look
+    input_box = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2, 300, 60)
     color = color_inactive
     active = False
     text = ''
@@ -160,31 +149,26 @@ def login_screen():
         title_text = title_font.render("Enter Player Name", True, neon_purple)
         screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - 100))
 
-        # Display input text in retro font
         txt_surface = input_font.render(text, True, color_active)
         input_box.w = max(300, txt_surface.get_width() + 10)
         screen.blit(txt_surface, (input_box.x + 10, input_box.y + 10))
         
-        # Draw the input box with retro neon effect
         pygame.draw.rect(screen, color, input_box, 4)
 
-        # Create leaderboard button
         if create_button("Leaderboard", WIDTH // 2 - 125, HEIGHT // 2 + 100, (0, 128, 0), (0, 200, 0)):
             show_leaderboard()
 
         pygame.display.flip()
         clock.tick(30)
 
-# Show leaderboard
 def show_leaderboard():
-    background_color = (20, 20, 30)  # Dark background
+    background_color = (20, 20, 30)
     screen.fill(background_color)
     title_font = pygame.font.SysFont("monospace", 50)
     leaderboard_font = pygame.font.SysFont("monospace", 35)
     title_text = title_font.render("Leaderboard", True, pygame.Color('cyan'))
     screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 50))
 
-    # Display leaderboard entries
     for idx, entry in enumerate(leaderboard):
         entry_text = leaderboard_font.render(f"{idx + 1}. {entry['name']} - {entry['score']}", True, pygame.Color('white'))
         screen.blit(entry_text, (WIDTH // 2 - entry_text.get_width() // 2, 150 + idx * 40))
@@ -199,23 +183,20 @@ def show_leaderboard():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 waiting = False
 
-# Button function with retro styling and dynamic sizing
 def create_button(text, x, y, inactive_color, active_color):
     mouse = pygame.mouse.get_pos()
     click = pygame.mouse.get_pressed()
     
-    # Use retro font for button text
     button_text = retro_font.render(text, True, WHITE)
-    width = button_text.get_width() + 20  # Add padding
-    height = button_text.get_height() + 10  # Add padding
+    width = button_text.get_width() + 20
+    height = button_text.get_height() + 10
     
     color = active_color if x + width > mouse[0] > x and y + height > mouse[1] > y else inactive_color
     pygame.draw.rect(screen, color, (x, y, width, height))
-    screen.blit(button_text, (x + 10, y + 5))  # Center text within the button
+    screen.blit(button_text, (x + 10, y + 5))
 
     return click[0] == 1 and color == active_color
 
-# Main game loop
 def main_game(player_name):
     global score, high_score, enemy_list, bullets, leaderboard
     score = 0
@@ -230,7 +211,7 @@ def main_game(player_name):
     kills = 0
     rapid_fire_active = False
     rapid_fire_start_time = 0
-    bullet_count = 1  # Start with 1 bullet
+    bullet_count = 1
 
     while True:
         for event in pygame.event.get():
@@ -238,28 +219,19 @@ def main_game(player_name):
                 pygame.quit()
                 sys.exit()
 
-        # space background
         screen.blit(space_background, (0, 0))
-
-        # Player name
         name_text = font.render(f"Player: {player_name}", True, WHITE)
         screen.blit(name_text, (WIDTH - name_text.get_width(), 10))
-
-        # Show score
         score_text = font.render(f"Score: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
-
-        # high score
         high_score_text = font.render(f"High Score: {current_player.high_score}", True, WHITE)
         screen.blit(high_score_text, (10, 50))
 
-        # Check for power-up
         if score > 0 and score % 10 == 0 and not power_up_active:
             power_up_active = True
             player_health = 2
             power_up_bar = 100
 
-        # Update power-up
         if power_up_active:
             power_up_bar -= 0.08
             if power_up_bar <= 0:
@@ -267,21 +239,18 @@ def main_game(player_name):
                 player_health = 1
                 power_up_bar = 0
                 
-            # power-up bar
-            pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))  # Gold color
+            pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))
 
         if not game_over:
-            # Move player
             keys = pygame.key.get_pressed()
             if keys[pygame.K_a] and player_pos[0] > 0:
                 player_pos[0] -= 5
             if keys[pygame.K_d] and player_pos[0] < WIDTH - PLAYER_SIZE:
                 player_pos[0] += 5
 
-            # Shooting
             current_time = pygame.time.get_ticks()
             if keys[pygame.K_SPACE] and current_time - last_shot_time >= (100 if rapid_fire_active else 500):
-                if len(bullets) < 4:  # Allow up to 4 bullets (2 shots of 2 bullets each)
+                if len(bullets) < 4:
                     for _ in range(bullet_count):
                         bullets.append([player_pos[0] + PLAYER_SIZE // 2 - 10, player_pos[1]])
                     last_shot_time = current_time
@@ -290,7 +259,6 @@ def main_game(player_name):
             update_positions(enemy_list, 3)
             update_positions(bullets, 15, is_bullet=True)
 
-            # Check for collisions
             bullets_to_remove = []
             enemies_to_remove = []
             for bullet in bullets:
@@ -304,7 +272,6 @@ def main_game(player_name):
                         score += 1
                         current_player.update_high_score(score)
 
-            # Remove bullets and enemies
             for bullet in bullets_to_remove:
                 if bullet in bullets:
                     bullets.remove(bullet)
@@ -312,7 +279,6 @@ def main_game(player_name):
                 if enemy in enemy_list:
                     enemy_list.remove(enemy)
 
-            # Draw entities
             draw_entities(player_image, [player_pos])
             draw_entities(enemy_image, enemy_list)
             draw_entities(bullet_image, bullets)
@@ -320,23 +286,20 @@ def main_game(player_name):
         pygame.display.flip()
         clock.tick(FPS)
 
-            # power-up bar
-        pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))  # Gold color
+        pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))
 
         if not game_over:
             screen.blit(player_image, (player_pos[0], player_pos[1]))
 
-            # Move player
             keys = pygame.key.get_pressed()
             if keys[pygame.K_a] and player_pos[0] > 0:
                 player_pos[0] -= 5
             if keys[pygame.K_d] and player_pos[0] < WIDTH - PLAYER_SIZE:
                 player_pos[0] += 5
 
-            # Shooting
             current_time = pygame.time.get_ticks()
             if keys[pygame.K_SPACE] and current_time - last_shot_time >= (100 if rapid_fire_active else 500):
-                if len(bullets) < 4:  # Allow up to 4 bullets (2 shots of 2 bullets each)
+                if len(bullets) < 4:
                     for _ in range(bullet_count):
                         bullets.append([player_pos[0] + PLAYER_SIZE // 2 - 10, player_pos[1]])
                     last_shot_time = current_time
@@ -370,20 +333,16 @@ def main_game(player_name):
             rapid_fire_active = True
             rapid_fire_start_time = pygame.time.get_ticks()
 
-        # Increase 0.5% power-up when active
         if power_up_active:
             power_up_bar = min(100, power_up_bar + 0.5)
 
-        # Increase bullet count after 10 hits
         if score == 10:
             bullet_count = 2
 
-        # Check if rapid-fire deactivated
         if rapid_fire_active and pygame.time.get_ticks() - rapid_fire_start_time >= 10000:
             rapid_fire_active = False
             kills = 0
 
-        # Game over screen
         if game_over:
             if score > current_player.high_score:
                 current_player.high_score = score
@@ -391,7 +350,7 @@ def main_game(player_name):
             leaderboard.append({"name": player_name, "score": score})
             leaderboard = sorted(leaderboard, key=lambda x: x["score"], reverse=True)[:5]
 
-            screen.blit(space_background, (0, 0))  # Use the same background for game over screen
+            screen.blit(space_background, (0, 0))
             screen.blit(explosion_image, (player_pos[0], player_pos[1]))
             game_over_text = retro_font.render("Game Over!", True, WHITE)
             score_text = retro_font.render(f"Final Score: {score}", True, WHITE)
@@ -417,11 +376,11 @@ def main_game(player_name):
                     enemy_list.clear()
                     bullets.clear()
                     score = 0
-                    bullet_count = 1  # Reset bullet count on restart
+                    bullet_count = 1
                     break
 
                 if create_button("Change Name", WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 0, 0), (200, 0, 0)):
-                    high_score = 0  # Reset high score when changing name
+                    high_score = 0
                     return "change_name"
 
                 if pygame.key.get_pressed()[pygame.K_ESCAPE]:
