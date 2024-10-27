@@ -44,7 +44,7 @@ enemy_list = []
 score = 0
 leaderboard = []
 font = pygame.font.SysFont("monospace", 35)
-retro_font = pygame.font.Font(r"c:\\Users\\Rvkko's computer\\Downloads\\CsDegitaRegularDemo-lxVGe.otf", 50)
+retro_font = pygame.font.Font(r"c:/Users/Rvkko's computer/Downloads/videotype.otf", 50)
 clock = pygame.time.Clock()
 
 class Player:
@@ -106,6 +106,28 @@ def check_collision(list1, list2, size1, size2):
                 return list1.index(item1), list2.index(item2)
     return None
 
+def welcome_screen():
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                running = False
+
+        screen.fill((20, 20, 30))
+        title_font = pygame.font.SysFont("monospace", 100)
+        title_text = title_font.render("Welcome To Galatic Shooter !!!", True, WHITE)
+        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - 100))
+
+        instructions_font = pygame.font.SysFont("monospace", 50)
+        instructions_text = instructions_font.render("Click to Start", True, WHITE)
+        screen.blit(instructions_text, (WIDTH // 2 - instructions_text.get_width() // 2, HEIGHT // 2 + 50))
+
+        pygame.display.flip()
+        clock.tick(120)
+
 def login_screen():
     global current_player, score, IS_MUTED
     color_inactive = pygame.Color('lightskyblue3')
@@ -114,7 +136,7 @@ def login_screen():
     neon_purple = pygame.Color('purple')
     
     title_font = pygame.font.SysFont("monospace", 50)
-    input_font = pygame.font.Font(r"c:\\Users\\Rvkko's computer\\Downloads\\CsDegitaRegularDemo-lxVGe.otf", 35)
+    input_font = pygame.font.Font(r"c:/Users/Rvkko's computer/Downloads/videotype.otf", 35)
     
     input_box = pygame.Rect(WIDTH // 2 - 150, HEIGHT // 2, 300, 60)
     color = color_inactive
@@ -140,7 +162,8 @@ def login_screen():
                     if event.key == pygame.K_RETURN:
                         current_player = Player(text)
                         score = 0
-                        return
+                        print(f"Player name captured: {text}")
+                        return text
                     elif event.key == pygame.K_BACKSPACE:
                         text = text[:-1]
                     else:
@@ -159,19 +182,27 @@ def login_screen():
         if create_button("Leaderboard", WIDTH // 2 - 125, HEIGHT // 2 + 100, (0, 128, 0), (0, 200, 0)):
             show_leaderboard()
 
-        # Add mute/unmute button
         mute_button_text = "Unmute" if IS_MUTED else "Mute"
         if create_button(mute_button_text, WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 128, 128), (200, 200, 200)):
             IS_MUTED = not IS_MUTED
             if IS_MUTED:
                 pygame.mixer.music.pause()
-                pygame.mixer.pause()  # Pause all sound effects
-            else:
+                pygame.mixer.pause()
+                player_hit_sound.set_volume(0)
+                enemy_hit_sound.set_volume(0)
+            if not IS_MUTED:
                 pygame.mixer.music.unpause()
-                pygame.mixer.unpause()  # Unpause all sound effects
+                pygame.mixer.unpause()
+                player_hit_sound.set_volume(1)
+                enemy_hit_sound.set_volume(1)
 
         pygame.display.flip()
         clock.tick(120)
+
+def start_game():
+    player_name = input("Enter your name: ")
+    print(f"Player name entered: {player_name}")
+    main_game(player_name)
 
 def pause_game():
     global IS_MUTED
@@ -189,10 +220,10 @@ def pause_game():
                     IS_MUTED = not IS_MUTED
                     if IS_MUTED:
                         pygame.mixer.music.pause()
-                        pygame.mixer.pause()  # Pause all sound effects
+                        pygame.mixer.pause()
                     else:
                         pygame.mixer.music.unpause()
-                        pygame.mixer.unpause()  # Unpause all sound effects
+                        pygame.mixer.unpause()
 
         screen.fill((0, 0, 0))
         screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2 - pause_text.get_height() // 2))
@@ -200,6 +231,23 @@ def pause_game():
         clock.tick(120)
 
 def show_leaderboard():
+    global leaderboard, high_score, current_player, screen, WIDTH
+
+    player_found = False  # Initialize player_found
+
+    for entry in leaderboard:
+        if entry["name"] == current_player.name:
+            player_found = True
+            if high_score > entry["score"]:
+                entry["score"] = high_score
+            break
+
+    if not player_found:
+        leaderboard.append({"name": current_player.name, "score": high_score})
+
+    # Sort the leaderboard by score in descending order
+    leaderboard = sorted(leaderboard, key=lambda x: x["score"], reverse=True)
+
     background_color = (20, 20, 30)
     screen.fill(background_color)
     title_font = pygame.font.SysFont("monospace", 50)
@@ -254,7 +302,7 @@ def pause_game():
 
         screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2))
         pygame.display.flip()
-        clock.tick(5)
+        clock.tick(120)
 
 def main_game(player_name):
     global score, high_score, enemy_list, bullets, leaderboard
@@ -272,6 +320,8 @@ def main_game(player_name):
     rapid_fire_start_time = 0
     bullet_count = 1
 
+    print(f"Starting game with player: {player_name}")
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -282,7 +332,7 @@ def main_game(player_name):
 
         screen.blit(space_background, (0, 0))
         name_text = retro_font.render(f"Player: {player_name}", True, WHITE)
-        screen.blit(name_text, (WIDTH - name_text.get_width(), 10))
+        screen.blit(name_text, (WIDTH - name_text.get_width() - 10, 10))
         score_text = retro_font.render(f"Score: {score}", True, WHITE)
         screen.blit(score_text, (10, 10))
         high_score_text = retro_font.render(f"High Score: {current_player.high_score}", True, WHITE)
@@ -441,9 +491,13 @@ def main_game(player_name):
                 bullets.clear()
                 score = 0
                 bullet_count = 1
-                # Restart the music
                 pygame.mixer.music.stop()
-                pygame.mixer.music.play(-1)
+                
+                if IS_MUTED:
+                    pygame.mixer.music.pause()
+                else:
+                    pygame.mixer.music.play(-1)
+                
                 break
 
             if create_button("Change Name", WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 0, 0), (200, 0, 0)):
@@ -452,61 +506,17 @@ def main_game(player_name):
 
             if pygame.key.get_pressed()[pygame.K_ESCAPE]:
                 pygame.quit()
-                sys.exit()  # Ensure the program exits properly
+                sys.exit()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()  # Ensure the program exits properly
+                    sys.exit()
 
             clock.tick(FPS)
 
             if power_up_active:
                 power_up_bar = min(100, power_up_bar + 50)
-
-    def welcome_screen():
-        running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                running = False
-
-        screen.fill((20, 20, 30))
-        title_font = pygame.font.SysFont("monospace", 100)
-        title_text = title_font.render("Welcome To Galatic Shooter !!!", True, WHITE)
-        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - 100))
-
-        instructions_font = pygame.font.SysFont("monospace", 50)
-        instructions_text = instructions_font.render("Click to Start", True, WHITE)
-        screen.blit(instructions_text, (WIDTH // 2 - instructions_text.get_width() // 2, HEIGHT // 2 + 50))
-
-        pygame.display.flip()
-        clock.tick(120)
-
-def welcome_screen():
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                running = False
-
-        screen.fill((20, 20, 30))
-        title_font = pygame.font.SysFont("monospace", 100)
-        title_text = title_font.render("Welcome To Galatic Shooter !!!", True, WHITE)
-        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - 100))
-
-        instructions_font = pygame.font.SysFont("monospace", 50)
-        instructions_text = instructions_font.render("Click to Start", True, WHITE)
-        screen.blit(instructions_text, (WIDTH // 2 - instructions_text.get_width() // 2, HEIGHT // 2 + 50))
-
-        pygame.display.flip()
-        clock.tick(120)
 
 if __name__ == "__main__":
     pygame.init()
@@ -514,25 +524,22 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     retro_font = pygame.font.SysFont("monospace", 30)
     
-    # Load and play music
     pygame.mixer.music.load("c:/Users/Rvkko's computer/Downloads/Megaman 3 Theme.mp3")
-    pygame.mixer.music.play(-1)  # Loop the music
-
+    pygame.mixer.music.play(-1)
     welcome_screen()
     player_name = login_screen()
+    print(f"Player name entered: {player_name}")
     
     while True:
         result = main_game(player_name)
         
         if result == "change_name":
             player_name = login_screen()
-            pygame.mixer.music.play(-1)  # Restart the music
-
+            print(f"Player name changed to: {player_name}")
+            pygame.mixer.music.play(-1)
         else:
             break
     
     pygame.quit()
     
-    # Additional functionality after quitting pygame
     print("Thank you for playing!")
-    # Add more code here if needed

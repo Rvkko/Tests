@@ -36,7 +36,7 @@ def test_login_logout(driver, test_data):
     next_button.click()
 
     password = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='password']")))
-    search.send_keys(test_data['password'])
+    password.send_keys(test_data['password'])
 
     next_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'VfPpkd-LgbsSe') and .//span[text()='Next']]")))
     next_button.click()
