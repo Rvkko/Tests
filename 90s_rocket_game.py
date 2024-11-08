@@ -1,6 +1,10 @@
+from turtle import back
 import pygame
 import random
 import sys
+import json
+import sqlite3
+
 
 pygame.init()
 pygame.mixer.init()
@@ -16,6 +20,11 @@ FRIENDLY_ROCKET_SIZE = 30
 ENEMY_ROCKET_SIZE = 30
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+
+with open('load_high_score.json', 'r') as file:
+    high_scores = json.load(file)
+
+    high_scores_str = "High Scores:\n" + "\n".join([f"{player}: {score}" for player, score in high_scores.items()])
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shooting Game !!!")
@@ -46,6 +55,42 @@ leaderboard = []
 font = pygame.font.SysFont("monospace", 35)
 retro_font = pygame.font.Font(r"c:/Users/Rvkko's computer/Downloads/videotype.otf", 50)
 clock = pygame.time.Clock()
+
+# High score dictionary
+high_scores = {}
+
+def load_high_scores(filename="high_scores.json"):
+    global high_scores
+    try:
+        with open(filename, 'r') as file:
+            high_scores = json.load(file)
+    except FileNotFoundError:
+        high_scores = {}
+
+def save_high_scores(filename="high_scores.json"):
+    with open(filename, 'w') as file:
+        json.dump(high_scores, file)
+
+def update_score(player_name, current_score):
+    if player_name in high_scores:
+        if current_score > high_scores[player_name]:
+            high_scores[player_name] = current_score
+    else:
+        high_scores[player_name] = current_score
+
+# Load high scores at the start of the game
+load_high_scores()
+
+# Example usage during gameplay
+player_name = "Player1"
+current_score = 0
+
+# Update score during the game
+current_score += 10  # Example score increment
+update_score(player_name, current_score)
+
+# Save high scores at the end of the game
+save_high_scores()
 
 class Player:
     def __init__(self, name):
@@ -98,11 +143,10 @@ def update_positions(positions, speed, is_bullet=False):
 
 def check_collision(list1, list2, size1, size2):
     for item1 in list1:
+        rect1 = pygame.Rect(item1[0], item1[1], size1, size1)
         for item2 in list2:
-            if (item1[0] < item2[0] + size2 and
-                item1[0] + size1 > item2[0] and
-                item1[1] < item2[1] + size2 and
-                item1[1] + size1 > item2[1]):
+            rect2 = pygame.Rect(item2[0], item2[1], size2, size2)
+            if rect1.colliderect(rect2):
                 return list1.index(item1), list2.index(item2)
     return None
 
@@ -112,18 +156,26 @@ def welcome_screen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                exit()
+                sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
 
         screen.fill((20, 20, 30))
         title_font = pygame.font.SysFont("monospace", 100)
-        title_text = title_font.render("Welcome To Galatic Shooter !!!", True, WHITE)
+        title_text = title_font.render("Welcome To Galactic Shooter !!!", True, WHITE)
         screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - 100))
 
         instructions_font = pygame.font.SysFont("monospace", 50)
         instructions_text = instructions_font.render("Click to Start", True, WHITE)
         screen.blit(instructions_text, (WIDTH // 2 - instructions_text.get_width() // 2, HEIGHT // 2 + 50))
+
+        high_score_font = pygame.font.SysFont("monospace", 50)
+        high_score_text = high_score_font.render(high_scores_str, True, WHITE)
+        screen.blit(high_score_text, (WIDTH // 2 - high_score_text.get_width() // 2, HEIGHT // 2 + 150))
 
         pygame.display.flip()
         clock.tick(120)
@@ -156,8 +208,7 @@ def login_screen():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+                    return welcome_screen()
                 if active:
                     if event.key == pygame.K_RETURN:
                         current_player = Player(text)
@@ -182,6 +233,79 @@ def login_screen():
         if create_button("Leaderboard", WIDTH // 2 - 125, HEIGHT // 2 + 100, (0, 128, 0), (0, 200, 0)):
             show_leaderboard()
 
+        if create_button("Settings", WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 128, 128), (200, 200, 200)):
+            settings_screen()
+
+        pygame.display.flip()
+        clock.tick(120)
+
+def rebindable_keys():
+    global screen, clock, key_bindinds
+    rebind_active = True
+    selected_action = None
+
+    #original binds
+    key_bindings = {
+        "left": pygame.K_a,
+        "right": pygame.K_d,
+        "shoot": pygame.K_SPACE,
+        "pause": pygame.K_p,
+        "quit": pygame.K_ESCAPE
+    }
+
+    while rebind_active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    rebind_active = False
+                elif selected_action:
+                    key_bindings[selected_action] = event.key
+                    selected_action = None
+
+        background_color = (20, 20, 30)
+        screen.fill(background_color)
+        rebind_text = retro_font.render("Key Binding", True, WHITE)
+        screen.blit(rebind_text, (WIDTH // 2 - rebind_text.get_width() // 2, HEIGHT // 2 - 200))
+
+        y_offset = 0
+        for action, key in key_bindings.items():
+            action_text = retro_font.render(f"{action}: {pygame.key.name(key)}", True, WHITE)
+            screen.blit(action_text, (WIDTH // 2 - action_text.get_width() // 2, HEIGHT // 2 - 100 + y_offset))
+            y_offset += 50
+
+            if create_button(f"Rebind {action}", WIDTH // 2 - 125, HEIGHT // 2 - 100 + y_offset, (128, 128, 128), (200, 200, 200)):
+                selected_action = action
+                pass
+
+        pygame.display.flip()
+        clock.tick(120)
+
+def settings_screen():
+    global screen, clock, IS_MUTED
+    settings_active = True
+
+    while settings_active:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    settings_active = False
+
+        if create_button("Rebind Keys", WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 128, 128), (200, 200, 200)):
+            rebindable_keys()
+
+        background_color = (20, 20, 30)
+        screen.fill(background_color)
+        settings_text = retro_font.render("Settings", True, WHITE)
+        screen.blit(settings_text, (WIDTH // 2 - settings_text.get_width() // 2, HEIGHT // 2 - 100))
+
+
+
         mute_button_text = "Unmute" if IS_MUTED else "Mute"
         if create_button(mute_button_text, WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 128, 128), (200, 200, 200)):
             IS_MUTED = not IS_MUTED
@@ -190,7 +314,7 @@ def login_screen():
                 pygame.mixer.pause()
                 player_hit_sound.set_volume(0)
                 enemy_hit_sound.set_volume(0)
-            if not IS_MUTED:
+            else:
                 pygame.mixer.music.unpause()
                 pygame.mixer.unpause()
                 player_hit_sound.set_volume(1)
@@ -207,14 +331,15 @@ def start_game():
 def pause_game():
     global IS_MUTED
     paused = True
-    pause_text = retro_font.render("Game Paused. click to Resume.", True, WHITE)
+    pause_text = retro_font.render("Game Paused. Press 'R' to Restart.", True, WHITE)
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if event.key == pygame.K_r:  # Press 'R' to restart the game
+                    initialize_game()
                     paused = False
                 if event.key == pygame.K_m:
                     IS_MUTED = not IS_MUTED
@@ -232,27 +357,47 @@ def pause_game():
 
 def show_leaderboard():
     global leaderboard, high_score, current_player, screen, WIDTH
+    if current_player is None:
+        print("Error: current_player is None")
+        return
+    if high_scores is None:
+        print("Error: high_scores is None")
+        return
 
-    player_found = False  # Initialize player_found
+    # Assuming you want to print high_score here
+    if high_score is not None:
+        print(f"High Score: {high_score}")
+    else:
+        print("Error: high_score is None")
+
+    player_found = False  # Initialize player_found to False
 
     for entry in leaderboard:
         if entry["name"] == current_player.name:
             player_found = True
-            if high_score > entry["score"]:
+            if entry["score"] < high_score:
                 entry["score"] = high_score
             break
 
     if not player_found:
         leaderboard.append({"name": current_player.name, "score": high_score})
 
-    # Sort the leaderboard by score in descending order
+    seen_names = set()
+    unique_leaderboard = []
+    for entry in leaderboard:
+        if entry["name"] not in seen_names:
+            unique_leaderboard.append(entry)
+            seen_names.add(entry["name"])
+
+    leaderboard = unique_leaderboard
+
     leaderboard = sorted(leaderboard, key=lambda x: x["score"], reverse=True)
 
     background_color = (20, 20, 30)
     screen.fill(background_color)
     title_font = pygame.font.SysFont("monospace", 50)
     leaderboard_font = pygame.font.SysFont("monospace", 35)
-    title_text = title_font.render("Leaderboard", True, pygame.Color('cyan'))
+    title_text = title_font.render("Leaderboard", True, (0, 255, 255))
     screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 50))
 
     for idx, entry in enumerate(leaderboard):
@@ -289,23 +434,40 @@ def create_button(text, x, y, inactive_color, active_color):
 
     return click[0] == 1 and color == active_color
 
-def pause_game():
-    paused = True
-    pause_text = retro_font.render("Game Paused. Press 'P' to Resume.", True, WHITE)
-    while paused:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                paused = False
+def handle_events():
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+            pause_game()
 
-        screen.blit(pause_text, (WIDTH // 2 - pause_text.get_width() // 2, HEIGHT // 2))
-        pygame.display.flip()
-        clock.tick(120)
+def draw_game(player_name, player_pos, power_up_bar, score, current_player):
+    screen.blit(space_background, (0, 0))
+    name_text = retro_font.render(f"Player: {player_name}", True, WHITE)
+    screen.blit(name_text, (WIDTH - name_text.get_width() - 10, 10))
+    score_text = retro_font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (10, 10))
+    high_score_text = retro_font.render(f"High Score: {current_player.high_score}", True, WHITE)
+    screen.blit(high_score_text, (10, 50))
+    pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))
+    screen.blit(player_image, (player_pos[0], player_pos[1]))
+    draw_entities(enemy_image, enemy_list)
+    draw_entities(bullet_image, bullets)
+    pygame.display.flip()
+
+def initialize_game():
+    global player, score, high_score, enemies, bullets, power_ups
+    player = Player()
+    score = 0
+    high_score = 0
+    enemies = []
+    bullets = []
+    power_ups = []
+    # Add any other game state initialization here
 
 def main_game(player_name):
-    global score, high_score, enemy_list, bullets, leaderboard
+    global score, high_score, enemy_list, bullets, leaderboard, current_player
     score = 0
     game_over = False
     player_pos = [WIDTH // 2, HEIGHT - PLAYER_SIZE]
@@ -320,23 +482,36 @@ def main_game(player_name):
     rapid_fire_start_time = 0
     bullet_count = 1
 
+    # Initialize current_player if not already initialized
+    if current_player is None:
+        current_player = Player(player_name)  # Assuming Player is a class that handles player data
+
     print(f"Starting game with player: {player_name}")
 
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-                pause_game()
+        handle_events()
 
-        screen.blit(space_background, (0, 0))
-        name_text = retro_font.render(f"Player: {player_name}", True, WHITE)
-        screen.blit(name_text, (WIDTH - name_text.get_width() - 10, 10))
-        score_text = retro_font.render(f"Score: {score}", True, WHITE)
-        screen.blit(score_text, (10, 10))
-        high_score_text = retro_font.render(f"High Score: {current_player.high_score}", True, WHITE)
-        screen.blit(high_score_text, (10, 50))
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a] and player_pos[0] > 0:
+            player_pos[0] -= 5
+        if keys[pygame.K_d] and player_pos[0] < WIDTH - PLAYER_SIZE:
+            player_pos[0] += 5
+
+        if keys[pygame.K_LEFT] and player_pos[0] > 0:
+            player_pos[0] -= 5
+        if keys[pygame.K_RIGHT] and player_pos[0] < WIDTH - PLAYER_SIZE:
+            player_pos[0] += 5
+
+        current_time = pygame.time.get_ticks()
+        if keys[pygame.K_SPACE] and current_time - last_shot_time >= (100 if rapid_fire_active else 500):
+            if len(bullets) < 4:
+                for _ in range(bullet_count):
+                    bullets.append([player_pos[0] + PLAYER_SIZE // 2 - 10, player_pos[1]])
+                last_shot_time = current_time
+
+        drop_enemies(enemy_list)
+        update_positions(enemy_list, ENEMY_DROP_SPEED)
+        update_positions(bullets, 15, is_bullet=True)
 
         if score > 0 and score % 10 == 0 and not power_up_active:
             power_up_active = True
@@ -349,79 +524,6 @@ def main_game(player_name):
                 power_up_active = False
                 player_health = 1
                 power_up_bar = 0
-                
-            pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))
-
-        if not game_over:
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_a] and player_pos[0] > 0:
-                player_pos[0] -= 5
-            if keys[pygame.K_d] and player_pos[0] < WIDTH - PLAYER_SIZE:
-                player_pos[0] += 5
-
-            current_time = pygame.time.get_ticks()
-            if keys[pygame.K_SPACE] and current_time - last_shot_time >= (100 if rapid_fire_active else 500):
-                if len(bullets) < 4:
-                    for _ in range(bullet_count):
-                        bullets.append([player_pos[0] + PLAYER_SIZE // 2 - 10, player_pos[1]])
-                    last_shot_time = current_time
-
-            drop_enemies(enemy_list)
-            update_positions(enemy_list, ENEMY_DROP_SPEED)
-            update_positions(bullets, 15, is_bullet=True)
-
-            bullets_to_remove = []
-            enemies_to_remove = []
-            for bullet in bullets:
-                for enemy in enemy_list:
-                    if (bullet[0] < enemy[0] + ENEMY_SIZE and
-                        bullet[0] + BULLET_SIZE > enemy[0] and
-                        bullet[1] < enemy[1] + ENEMY_SIZE and
-                        bullet[1] + BULLET_SIZE > enemy[1]):
-                        bullets_to_remove.append(bullet)
-                        enemies_to_remove.append(enemy)
-                        score += 1
-                        current_player.update_high_score(score)
-                        enemy_hit_sound.play()
-
-            for bullet in bullets_to_remove:
-                if bullet in bullets:
-                    bullets.remove(bullet)
-            for enemy in enemies_to_remove:
-                if enemy in enemy_list:
-                    enemy_list.remove(enemy)
-
-            draw_entities(player_image, [player_pos])
-            draw_entities(enemy_image, enemy_list)
-            draw_entities(bullet_image, bullets)
-
-        pygame.display.flip()
-        clock.tick(FPS)
-
-        pygame.draw.rect(screen, (255, 215, 0), (10, 90, power_up_bar, 20))
-
-        if not game_over:
-            screen.blit(player_image, (player_pos[0], player_pos[1]))
-
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_a] and player_pos[0] > 0:
-                player_pos[0] -= 5
-            if keys[pygame.K_d] and player_pos[0] < WIDTH - PLAYER_SIZE:
-                player_pos[0] += 5
-
-            current_time = pygame.time.get_ticks()
-            if keys[pygame.K_SPACE] and current_time - last_shot_time >= (100 if rapid_fire_active else 500):
-                if len(bullets) < 4:
-                    for _ in range(bullet_count):
-                        bullets.append([player_pos[0] + PLAYER_SIZE // 2 - 10, player_pos[1]])
-                    last_shot_time = current_time
-
-            drop_enemies(enemy_list)
-            update_positions(enemy_list, ENEMY_DROP_SPEED)
-            update_positions(bullets, 15, is_bullet=True)
-
-            draw_entities(enemy_image, enemy_list)
-            draw_entities(bullet_image, bullets)
 
         collision = check_collision(enemy_list, [player_pos], ENEMY_SIZE, PLAYER_SIZE)
         if collision:
@@ -486,19 +588,8 @@ def main_game(player_name):
             pygame.display.update()
 
             if create_button("Restart Game", WIDTH // 2 - 125, HEIGHT // 2 + 100, (0, 128, 0), (0, 200, 0)):
-                game_over = False
-                enemy_list.clear()
-                bullets.clear()
-                score = 0
-                bullet_count = 1
-                pygame.mixer.music.stop()
-                
-                if IS_MUTED:
-                    pygame.mixer.music.pause()
-                else:
-                    pygame.mixer.music.play(-1)
-                
-                break
+                main_game(player_name)  # Restart the game with the same player name
+                return
 
             if create_button("Change Name", WIDTH // 2 - 125, HEIGHT // 2 + 170, (128, 0, 0), (200, 0, 0)):
                 high_score = 0
@@ -515,31 +606,43 @@ def main_game(player_name):
 
             clock.tick(FPS)
 
-            if power_up_active:
-                power_up_bar = min(100, power_up_bar + 50)
+        draw_game(player_name, player_pos, power_up_bar, score, current_player)
+
+def main():
+    while True:
+        # Display welcome screen
+        welcome_screen()
+        
+        # Display login page and get player name
+        player_name = login_screen()
+        
+        # Ensure a valid player name is entered before starting the game
+        while player_name:
+            # Start the main game
+            result = main_game(player_name)
+            
+            if result == "login_page":
+                player_name = login_screen()  # Go back to the login page
+            elif result == "change_name":
+                player_name = login_screen()  # Prompt for a new name
+            else:
+                break  # Exit the loop if no valid result is returned
+
+        # Limit the frame rate to avoid flickering and slow performance
+        clock.tick(60)
+        pygame.display.flip()
 
 if __name__ == "__main__":
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF)
     clock = pygame.time.Clock()
     retro_font = pygame.font.SysFont("monospace", 30)
-    
+
     pygame.mixer.music.load("c:/Users/Rvkko's computer/Downloads/Megaman 3 Theme.mp3")
     pygame.mixer.music.play(-1)
-    welcome_screen()
-    player_name = login_screen()
-    print(f"Player name entered: {player_name}")
-    
-    while True:
-        result = main_game(player_name)
-        
-        if result == "change_name":
-            player_name = login_screen()
-            print(f"Player name changed to: {player_name}")
-            pygame.mixer.music.play(-1)
-        else:
-            break
-    
+
+    main()  # Call the main function to start the game
     pygame.quit()
-    
+    sys.exit()
+
     print("Thank you for playing!")

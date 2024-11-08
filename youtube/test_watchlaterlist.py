@@ -1,16 +1,20 @@
 import json
 import os
 import pytest
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from appium import webdriver as appium_webdriver
 
-@pytest.fixture
-def driver():
-    driver = webdriver.Chrome()
-    wait = WebDriverWait(driver, 5)
-    driver.maximize_window()
+@pytest.fixture(params=["Chrome", "Firefox"])
+def driver(request):
+    desired_caps = {
+        "platformName": "Android",
+        "deviceName": "emulator-5554",
+        "browserName": request.param
+    }
+    driver = appium_webdriver.Remote('http://localhost:4723/wd/hub', desired_capabilities=desired_caps)
+    wait = WebDriverWait(driver, 10)
     yield driver, wait
     driver.quit()
 
@@ -23,10 +27,10 @@ def test_data():
     return data
 
 def test_login_logout(driver, test_data):
-    driver, wait = driver
-    driver.get('https://www.youtube.com/')
+    driver_instance, wait = driver
+    driver_instance.get('https://www.youtube.com/')
 
-    sign_in = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den%26next%3Dhttps%253A%252F%252Fwww.youtube.com%252F&hl=en&ec=65620']")))
+    sign_in = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@href='https://accounts.google.com/ServiceLogin?service=youtube&uilel=3&passive=true&continue=https%3A%2F%2Fwww.youtube.com%2Fsignin%3Faction_handle_signin%3Dtrue%26app%3Ddesktop%26hl%3Den&ec=65620']")))
     sign_in.click()
 
     email = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='email']")))
@@ -71,6 +75,6 @@ def test_login_logout(driver, test_data):
     watch_later_list = wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@class='yt-thumbnail-view-model__image']")))
     watch_later_list.click()
 
-    WebDriverWait(driver, 5).until(EC.url_contains('https://www.youtube.com/'))
-    actual_url = driver.current_url
+    WebDriverWait(driver_instance, 5).until(EC.url_contains('youtube.com/'))
+    actual_url = driver_instance.current_url
     assert actual_url.startswith('https://www.youtube.com/')
