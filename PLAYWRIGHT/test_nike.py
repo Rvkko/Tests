@@ -1,22 +1,18 @@
-from playwright.async_api import async_playwright, expect
-import asyncio
+from playwright.sync_api import sync_playwright
+import time
 
-async def main():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)  # Launch browser in headed mode
-        page = await browser.new_page()
+def main():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()
+        page.goto("https://www.nike.com/")
+        page.get_by_placeholder("Search").fill("Air Jordan 11")
+        time.sleep(3)
+        page.locator("img[src='https://static.nike.com/a/images/t_default/u_126ab356-44d8-4a06-89b4-fcdcc8df0245,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/31236ecd-a774-4bf4-bf08-0f5ea28e5aaa/air-jordan-11-retro-low-diffused-blue-mens-shoes-FHNp6G.png']").click()
+        time.sleep(3)
+        page.locator("label.u-full-width u-full-height d-sm-flx flx-jc-sm-c flx-ai-sm-c").click()
+        time.sleep()
+        browser.close()
 
-        # Test check title
-        await page.goto("https://www.nike.com/us/en_us/")
-        await expect(page).to_have_title("Nike. Just Do It. Nike.com")
-        print(await page.title())
-
-        await page.fill('button[aria-label="search"]', 'Air Jordan')
-        page.keyboard.press('Enter')
-
-        # Test check title
-        await expect(page).to_have_title("Nike. Just Do It. Nike.com")
-
-# Run the main function
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
