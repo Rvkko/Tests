@@ -1,0 +1,12 @@
+{
+    "shoe":"Air Jordan 11 CMFT Low",
+    "firstname": "Test",
+    "lastname":"Account",
+    "password":"Admin123!",
+    "confirmpassword": "Admin123!",
+    "email":"testacctmanager24@gmail.com",
+    "cardinfo":"4012888888881881",
+    "cvv":"357",
+    "address":"10692 W Sample Rd, Coral Springs FL 33065-7418",
+    "location":"Coral Springs, Florida 33065"
+}
