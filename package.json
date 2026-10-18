@@ -1,0 +1,15 @@
+{
+  "name": "rvkko-qa-portfolio",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Deterministic local browser tests and archived live-site learning exercises",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:unit": "python -m pytest tests/unit -q && node --test scripts/store.test.cjs",
+    "demo": "node scripts/demo-server.cjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}

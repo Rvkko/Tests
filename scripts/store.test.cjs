@@ -1,0 +1,4 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');const {newStore,setQuantity,snapshot,checkout}=require('./store.cjs');
+test('money uses integer cents through multi-item checkout',()=>{const s=newStore();setQuantity(s,'shirt',2);setQuantity(s,'mug',1);assert.equal(snapshot(s).total,5297);assert.equal(checkout(s).total,5297);assert.equal(snapshot(s).total,0);assert.equal(s.products[0].stock,2)});
+test('invalid operations are atomic',()=>{const s=newStore(),before=JSON.stringify(s);for(const n of [-1,1.5,5,NaN,'1'])assert.throws(()=>setQuantity(s,'shirt',n));assert.throws(()=>checkout(s));assert.equal(JSON.stringify(s),before)});
+test('removal and independent stores cannot corrupt each other',()=>{const a=newStore(),b=newStore();setQuantity(a,'shirt',4);checkout(a);assert.equal(b.products[0].stock,4);setQuantity(b,'mug',1);setQuantity(b,'mug',0);assert.deepEqual(b.cart,{})});

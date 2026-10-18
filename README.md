@@ -1,86 +1,49 @@
-# 🛠️ Quality Assurance Testing
+# QA Portfolio
 
-This repository showcases my work in both automated and manual testing, focusing on functionality, usability, and performance validation. The tests are designed to ensure robust and reliable systems by simulating various user scenarios.
+A repeatable local testing project, plus the original live-site learning scripts preserved separately.
 
----
+## Run the verified suite
 
-## 📂 (Sample) Files Overview
-
-### **1. test_login_order_sub.py**
-Automates login, order placement, and subscription validation for a web application.
-
-### **2. test_recipe_homemadepasta.py**
-Tests the creation and submission of a homemade pasta recipe, focusing on functionality and user interface.
-
-### **3. test_signup.py**
-Validates the user signup process, ensuring correct data input and error handling for invalid entries.
-
-### **4. test_create_shopify_acct.py**
-Tests the process of creating a Shopify account and adding products.
-
-### **5. test_login_sell.py**
-Automates login and selling functionalities, verifying key workflows for e-commerce platforms.
-
-### **6. test_price_of_solo_entrepreneurs.py**
-Tests the pricing page for solo entrepreneurs, focusing on UI and correct pricing retrieval.
-
-### **Test Data Files**
-- **test_data.json:** Contains mock data, including user credentials, product details, and testing parameters. Examples include:
-  - Username: `testacctmanager24@gmail.com`
-  - Password: `Admin123!`
-  - Email: `derrikoherronjr91@gmail.com`
-  - Product Titles: "Cool Awesome Short Sleeve Shirt," "Cool Awesome Pants (Men)"
-
----
-
-## ✨ Features
-
-- **Automated Testing:** Scripts built using Python and Selenium for dynamic interaction with web applications.
-- **Manual Validation:** Complementary manual checks for edge cases and exploratory testing.
-- **Dynamic Test Data:** JSON-based input for flexible and reusable test cases.
-- **E2E Workflow Coverage:** Comprehensive scenarios from signup to product management.
-
----
-
-## 🔧 Setup Instructions
-
-### **Install Python**
-Ensure Python is installed on your system. Download it from [python.org](https://www.python.org/).
-
-### **Install Required Libraries**
-Install dependencies with:
-```bash
+```sh
+npm ci
+npx playwright install chromium
 pip install -r requirements.txt
+npm run test:unit
+npm test
 ```
 
-### **Run the Tests**
-Execute each test script using:
-```bash
-python <test_file>.py
-```
+`npm run demo` opens the local QA practice store at http://127.0.0.1:4190. The credentials displayed there are deliberately synthetic. No payment, email, or third-party account service is connected.
 
----
+## What is tested
 
-## How to Use
+- Browser: login rejection, session persistence/logout, cart quantities/removal/totals, checkout, stock, duplicate checkout, API authentication/validation, isolated browser sessions, phone layout.
+- Unit: integer money totals, atomic invalid operations, isolated store state, browser cleanup on failure, environment data loading and invalid configuration.
+- CI runs the same checks against a local server. Test failures fail the process; no retries mask them. Failure traces/screenshots use only synthetic local data.
 
-1. Clone the repository to your local machine.
-2. Set up the required environment by installing dependencies.
-3. Execute the test scripts to validate specific functionalities:
-   - **Example:** Run `test_login_sell.py` to validate the login and selling workflow.
+## Structure
 
----
+- `demo/`, `scripts/demo-server.cjs`, `scripts/store.cjs` — local practice target and its actual server-side rules.
+- `e2e/` — current Playwright suite.
+- `tests/unit/`, `scripts/store.test.cjs` — configuration/lifecycle and store regressions.
+- `legacy/selenium/` — original Publix, Shopify, Weather and YouTube exercises.
+- `legacy/nike/`, `legacy/cypress/`, `legacy/playwright-starter/` — historical samples, not the current verified suite.
 
-## 🛠️ Technologies Used
+## Historical live-site samples
 
-- **Python:** The primary programming language for automation.
-- **Selenium:** For interacting with web elements dynamically.
-- **JSON:** For managing test data.
-- **Manual Testing Tools:** BrowserStack, Postman, and Jira for validation and bug tracking.
+These are **unverified learning exercises**, not proven production automation. Their hardcoded store routes, selectors, third-party login/CAPTCHA assumptions and incomplete assertions still need site-by-site work.
 
----
+They are not collected by default. To deliberately run one, install the Python requirements, configure its `QA_<PROJECT>_<KEY>` environment values, and explicitly invoke `python -m pytest --live legacy/selenium/<project>/<file>.py`. The YouTube and signup examples can send messages/create or change real accounts; do not run them casually. No live-site actions were performed during remediation.
 
-## 📊 Summary
+Blank values in `test_data.example.json` are configuration slots. Private `test_data.json` and `.env` files are ignored. Old passwords/contact/payment fixtures and screenshots were removed from the current tracked tree; **Git history still contains earlier versions. Rotate any real credentials that were previously published.**
 
-This repository highlights my expertise in Quality Assurance, focusing on ensuring product reliability through automated and manual testing. The test scenarios simulate real-world use cases, enhancing product quality and end-user satisfaction.
+## What went wrong in the original work
 
-Feel free to explore and share feedback!
+1. CI ran Playwright's starter website examples rather than the account workflows described by the README.
+2. Some tests only checked the domain after many clicks, or returned True/False instead of asserting the promised outcome.
+3. Shopify called a fixture function as a browser; product-creation exceptions were swallowed, and repeated helpers checked the wrong product names.
+4. Every script duplicated driver/data fixtures. Failed setup could leak a browser because cleanup was not guarded.
+5. Credentials, personal data, browser screenshots and entire installed environments were tracked.
+6. Absolute XPath selectors, generated IDs, fixed sleeps and specific account/store routes made scripts brittle and account-dependent.
+7. A Nike sample called `time.sleep()` without an argument and used a malformed CSS selector.
+
+The current local suite fixes the repeatability and CI foundation. It does not certify that all archived third-party workflows work today.

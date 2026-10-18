@@ -1,0 +1,6 @@
+const PRODUCTS=Object.freeze([{id:'shirt',name:'Orbit Tee',price:1999,stock:4},{id:'mug',name:'Night Shift Mug',price:1299,stock:3}]);
+function newStore(){return {products:PRODUCTS.map(p=>({...p})),cart:{},orders:[]}}
+function setQuantity(store,id,quantity){const product=store.products.find(p=>p.id===id);if(!product)throw new Error('Unknown product');if(!Number.isInteger(quantity)||quantity<0||quantity>product.stock)throw new Error('Quantity must be a whole number within stock');if(quantity===0)delete store.cart[id];else store.cart[id]=quantity;}
+function snapshot(store){const items=Object.entries(store.cart).map(([id,quantity])=>{const p=store.products.find(p=>p.id===id);return {...p,quantity,lineTotal:p.price*quantity}});return {products:store.products,items,total:items.reduce((sum,p)=>sum+p.lineTotal,0),orders:store.orders}}
+function checkout(store){const view=snapshot(store);if(!view.items.length)throw new Error('Your cart is empty');for(const p of view.items)if(p.quantity>p.stock)throw new Error('Insufficient stock');for(const p of view.items)store.products.find(item=>item.id===p.id).stock-=p.quantity;const order={id:store.orders.length+1,total:view.total};store.orders.push(order);store.cart={};return order;}
+module.exports={newStore,setQuantity,snapshot,checkout};
